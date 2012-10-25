@@ -9,50 +9,6 @@ var puts = console.log;
 var inspect = sys.inspect;
 require('./adn3.net.version');
 
-var RqtHandler = function(host) {
-    this.host = host;
-    };
-
-RqtHandler.prototype.onConnect = function() {
-    this.host.message("test", undefined);
-};
-RqtHandler.prototype.onData = function(data) {
-	try {
-		var i;
-        var buffer = "";
-        buffer += data;
-		while (i = buffer.indexOf("\r\n")) {
-			if (i < 0) break;
-			var msg = buffer.slice(0,i);
-			if (msg.length > 1024) {
-				this.host.quit("Too much data");
-			} else {
-				buffer = buffer.slice(i+2);
-				this.host.process(msg);
-			}
-		}
-	} catch(e) {
-		puts("Receive : Exception - " + e);
-	}
-};
-RqtHandler.prototype.onEnd = function(data) {
-	try {
-		if (this.host !== undefined) { 
-			this.host.quit("Connection reset by peer");
-		}
-	} catch (e) {
-		puts("Eof : Exception - " + e);
-	}    
-};
-RqtHandler.prototype.onTimeout = function(data) {
-	try {
-		if (this.host !== undefined) {
-			this.host.quit("idle timeout");
-		}
-	} catch (e) {
-		puts("Timeout : Exception - " + e);
-	}    
-};
 
 var server = net.createServer(function (s) {
     s.setTimeout(2*60*1000); // 2 minutes idle timeout
@@ -63,17 +19,13 @@ var server = net.createServer(function (s) {
 	u.hosts[host.uuid] = host;
     var rqtHandler = new RqtHandler(host);
 	
-    s.addListener("connect", rqtHandler.onConnect);
-    s.addListener("data", rqtHandler.onData);
-    s.addListener("end",rqtHandler.onEnd);
-    s.addListener("timeout",rqtHandler.onTimeout);
-    /*
     s.addListener("connect", function () {
 		host.message("test", undefined);
 	});
 	s.addListener("data", function (data) {
 		try {
 			var i;
+            buffer = "";
             buffer += data;
 			while (i = buffer.indexOf("\r\n")) {
 				if (i < 0) break;
@@ -108,7 +60,6 @@ var server = net.createServer(function (s) {
 			puts("Timeout : Exception - " + e);
 		}
 	});
-    */
 });
 server.listen(port, addr);
 puts("Listening on ["+addr+"] port ["+port+"]");
